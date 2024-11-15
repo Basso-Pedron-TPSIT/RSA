@@ -1,10 +1,12 @@
 package com.itts.volterra.quinta.BassoPedron.RSA;
 
-import java.math.BigInteger;
 import java.util.Scanner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * @author Matteo Basso, Lorenzo Pedron
+ */
 public class App {
 	private static final Logger logger = LogManager.getLogger(App.class);
 	public static void main(String[] args) {
