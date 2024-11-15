@@ -2,28 +2,39 @@ package com.itts.volterra.quinta.BassoPedron.RSA;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Base64;
 
 public class RSA {
 	private static final Logger logger = LogManager.getLogger(RSA.class);
-	
+	private final int MAX_STRING_BYTES;
+	private BigInteger n, d, e, z; // (modulo n, esponente privato, esponente pubblico, funzione di eulero)
 	public RSA(int bitLength) {
-		SecureRandom random = new SecureRandom();
-		// Genera due numeri primi casuali, entrambi maggiori di almeno 300 bit
-        BigInteger p = generatePrime(random, 300);
-        BigInteger q = generatePrime(random, 300);
+		int byteOfRSA = (bitLength / 8);
+		MAX_STRING_BYTES = byteOfRSA;
+		System.err.println(MAX_STRING_BYTES);
+		// Genera due numeri primi casuali, entrambi maggiori di almeno bitLength bit
+        BigInteger p = generatePrime(bitLength);
+        BigInteger q = generatePrime(bitLength);
 
         // Calcolo n 
-        BigInteger n = p.multiply(q);
+        n = p.multiply(q);
         
         BigInteger P = p.subtract(BigInteger.ONE);
         BigInteger Q = q.subtract(BigInteger.ONE);
-        // Calcolo z
-        BigInteger z = P.multiply(Q);
+        // Calcolo funzione di eulero
+        z = P.multiply(Q);
         
-        // Calcolo la chiave pubblica
-        BigInteger e = generateCoprime(z);
+        // Calcolo l'esponente pubblico
+        e = generateCoprime(z);
+        
+        d = calculatePrivateExponent(e, z);
         
         // mostra i risultati nel log
         logger.info("Numeri primi generati:");
@@ -33,10 +44,14 @@ public class RSA {
         logger.info("z = (p - 1) * (q - 1): " + z);
         logger.info("ESPONENTE PUBBLICO");
         logger.info("Numero coprimo generato (e): " + e);
+        logger.info("ESPONENTE PRIVATO");
+        logger.info("Numero d tale che il suo prodotto con e sia congruo a 1 mod (z) : " + d);
+        
 		
 	}
     // Funzione per generare un numero primo maggiore di almeno bitLength bit 
-    public BigInteger generatePrime(SecureRandom random, int bitLength) {
+    public BigInteger generatePrime(int bitLength) {
+    	SecureRandom random = new SecureRandom();
         BigInteger prime;
         
         do {
@@ -46,12 +61,6 @@ public class RSA {
         return prime;
     }
 	    
-	    
-    // Funzione per calcolare il massimo comun divisore (gcd)
-    public BigInteger gcd(BigInteger p, BigInteger q) {
-        return p.gcd(q); // metodo della classe BigInteger
-    }
-	    
     // Funzione per generare un numero coprimo e con z
     public BigInteger generateCoprime(BigInteger z) {
         SecureRandom random = new SecureRandom();
@@ -59,18 +68,36 @@ public class RSA {
 
         do {
             e = new BigInteger(z.bitLength(), random);
-        } while (e.compareTo(BigInteger.ONE) <= 0 || e.compareTo(z) >= 0 || gcd(e, z).compareTo(BigInteger.ONE) != 0);
+        } while (e.compareTo(BigInteger.ONE) <= 0 || e.compareTo(z) >= 0 || e.gcd(z).compareTo(BigInteger.ONE) != 0);
 
         return e; // Restituisce il numero coprimo
     }
-
-	    public static void main(String[] args) {
-	        try {
-	           
-	            
-
-	        } catch (Exception e) {
-	            logger.error("Errore durante la generazione dei numeri primi!", e);
-	        }
-	    }
+    
+    public BigInteger calculatePrivateExponent(BigInteger e, BigInteger eulerFunction) {
+    	return e.modInverse(eulerFunction);
+    }
+    
+    public String encrypt(String messageToCrypt) {
+    	StringBuilder sb = new StringBuilder();
+    	for(byte part : messageToCrypt.getBytes()) {
+    		BigInteger crypted = BigInteger.valueOf(part).modPow(e, n);
+    		sb.append(crypted.toString());
+    		sb.append(";");
+    	}
+    	
+    	return sb.toString();
+    }
+    
+    public String decrypt(String cryptedMessage) {
+    	StringBuilder sb = new StringBuilder();
+    	String[] parts = cryptedMessage.split(";");
+    	for(String part : parts) {
+    		if(!part.isEmpty()) {
+    			BigInteger decrypted = new BigInteger(part).modPow(d, n);
+        		sb.append(new String(decrypted.toByteArray(), StandardCharsets.UTF_8));
+    		}
+    	}
+    	
+    	return sb.toString();
+    }
 }
