@@ -24,7 +24,7 @@ public class RSA {
         // Calcolo n 
         n = p.multiply(q);
         
-        l = n.bitLength() / 8;
+        l = n.bitLength() / 8; // 8 byte
         
         BigInteger P = p.subtract(BigInteger.ONE);
         BigInteger Q = q.subtract(BigInteger.ONE);
@@ -49,7 +49,7 @@ public class RSA {
         
 		
 	}
-    // Funzione per generare un numero primo maggiore di almeno bitLength bit 
+    // genera un numero primo maggiore di almeno bitLength bit 
     public BigInteger generatePrime(int bitLength) {
     	SecureRandom random = new SecureRandom();
         BigInteger prime;
@@ -61,7 +61,7 @@ public class RSA {
         return prime;
     }
 	    
-    // Funzione per generare un numero coprimo e con z
+    // genera un numero coprimo e con z
     public BigInteger generateCoprime(BigInteger z) {
         SecureRandom random = new SecureRandom();
         BigInteger e;
@@ -100,7 +100,6 @@ public class RSA {
     		try {
 				threads[i].join();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
     		sb.append(cryptedParts[i]);
@@ -137,7 +136,6 @@ public class RSA {
     			try {
     				threads[i].join();
     			} catch (InterruptedException e) {
-    				// TODO Auto-generated catch block
     				e.printStackTrace();
     			}
         		sb.append(decryptedParts[i]);
