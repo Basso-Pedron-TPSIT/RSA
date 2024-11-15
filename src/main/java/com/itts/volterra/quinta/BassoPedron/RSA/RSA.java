@@ -27,6 +27,7 @@ public class RSA {
 	 * @param bitLength il numero di bit dei numeri primi da generare
 	 */
 	public RSA(int bitLength) {
+		logger.info("Inizializzazione in corso");
 		// Genera due numeri primi casuali, entrambi maggiori di almeno bitLength bit
         BigInteger p = generatePrime(bitLength);
         BigInteger q = generatePrime(bitLength);
@@ -131,12 +132,12 @@ public class RSA {
     		try {
 				threads[i].join();
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				logger.error("Thread di criptazione interrotto!", e);
 			}
     		sb.append(cryptedParts[i]);
     	}
     	
-    	logger.info("Encrypted");
+    	logger.info("Messaggio criptato correttamente");
     	return sb.toString();
     }
     
@@ -173,12 +174,13 @@ public class RSA {
     			try {
     				threads[i].join();
     			} catch (InterruptedException e) {
-    				e.printStackTrace();
+    				logger.error("Thread di decriptazione interrotto!", e);
     			}
         		sb.append(decryptedParts[i]);
     		}
     	}
-    	    	
+    	
+    	logger.info("Messaggio decriptato correttamente");	
     	return sb.toString();
     }
 }

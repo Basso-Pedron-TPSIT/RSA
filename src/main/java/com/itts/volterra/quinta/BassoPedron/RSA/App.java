@@ -13,14 +13,13 @@ public class App {
 		RSA rsa = new RSA(2048);
 		Scanner input = new Scanner (System.in);
 		String message = "";
-		System.out.println ("Inserisci la Stringa da criptare: ");
+		System.out.print("Inserisci la Stringa da criptare: ");
 		message = input.nextLine();
-		System.out.println(message.length());
 		
 		String encrypted = rsa.encrypt(message);
-		System.out.println("Stringa criptata: " + encrypted);
+		logger.info("Stringa criptata: " + encrypted);
 		String decrypted = rsa.decrypt(encrypted);
-		System.out.println("Stringa decriptata: " + decrypted);
+		logger.info("Stringa decriptata: " + decrypted);
 	
 	}
 }
