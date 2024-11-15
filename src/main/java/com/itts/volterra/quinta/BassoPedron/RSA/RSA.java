@@ -13,18 +13,18 @@ import java.util.Base64;
 
 public class RSA {
 	private static final Logger logger = LogManager.getLogger(RSA.class);
-	private final int MAX_STRING_BYTES;
+	
+	private final int l; // lunghezza del blocco di caratteri da criptare
 	private BigInteger n, d, e, z; // (modulo n, esponente privato, esponente pubblico, funzione di eulero)
 	public RSA(int bitLength) {
-		int byteOfRSA = (bitLength / 8);
-		MAX_STRING_BYTES = byteOfRSA;
-		System.err.println(MAX_STRING_BYTES);
 		// Genera due numeri primi casuali, entrambi maggiori di almeno bitLength bit
         BigInteger p = generatePrime(bitLength);
         BigInteger q = generatePrime(bitLength);
 
         // Calcolo n 
         n = p.multiply(q);
+        
+        l = n.bitLength() / 8;
         
         BigInteger P = p.subtract(BigInteger.ONE);
         BigInteger Q = q.subtract(BigInteger.ONE);
@@ -79,24 +79,77 @@ public class RSA {
     
     public String encrypt(String messageToCrypt) {
     	StringBuilder sb = new StringBuilder();
-    	for(byte part : messageToCrypt.getBytes()) {
-    		BigInteger crypted = BigInteger.valueOf(part).modPow(e, n);
-    		sb.append(crypted.toString());
-    		sb.append(";");
+    	ArrayList<String> parts = Tools.splitStringInSubStringOfNchars(messageToCrypt, l);
+    	String[] cryptedParts = new String[parts.size()];
+    	Thread[] threads = new Thread[parts.size()];
+    	int partNum = 0;
+    	for(String part : parts) {
+    		final int threadNum = partNum;
+    		threads[threadNum] = new Thread(new Runnable() {
+    			@Override
+    			public void run() {
+    				BigInteger crypted = new BigInteger(part.getBytes()).modPow(e, n);
+    				cryptedParts[threadNum]  = crypted.toString() + ";";
+    			}
+    		});
+    		threads[threadNum].start();
+    		partNum++;
     	}
     	
+    	for(int i = 0; i < threads.length; i++) {
+    		try {
+				threads[i].join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		sb.append(cryptedParts[i]);
+    	}
+    	
+    	logger.info("Encrypted");
     	return sb.toString();
     }
     
     public String decrypt(String cryptedMessage) {
     	StringBuilder sb = new StringBuilder();
     	String[] parts = cryptedMessage.split(";");
+    	String[] decryptedParts = new String[parts.length];
+    	Thread[] threads = new Thread[parts.length];
+    	
+    	int partNum = 0;
+    	for(String part : parts) {
+    		if(!part.isEmpty()) {
+    			final int threadNum = partNum;
+        		threads[threadNum] = new Thread(new Runnable() {
+        			@Override
+        			public void run() {
+        				BigInteger decrypted = new BigInteger(part).modPow(d, n);
+                		decryptedParts[threadNum] = new String(decrypted.toByteArray(), StandardCharsets.UTF_8);
+        			}
+        		});
+        		threads[threadNum].start();
+        		partNum++;
+    		}
+    	}
+    	
+    	for(int i = 0; i < threads.length; i++) {
+    		if(threads[i] != null) {
+    			try {
+    				threads[i].join();
+    			} catch (InterruptedException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
+        		sb.append(decryptedParts[i]);
+    		}
+    	}
+    	/*
     	for(String part : parts) {
     		if(!part.isEmpty()) {
     			BigInteger decrypted = new BigInteger(part).modPow(d, n);
         		sb.append(new String(decrypted.toByteArray(), StandardCharsets.UTF_8));
     		}
-    	}
+    	}*/
     	
     	return sb.toString();
     }
